@@ -1,0 +1,44 @@
+FIVES:
+  input_dir: FIVES/test/Original
+  gt_dir: FIVES/test/GroundTruth
+  input_ext: png
+  gt_ext: png
+  whole_size: [2048, 2048]
+  patch_size: [512, 512]
+  crop_output: [0, 0, 512, 512]
+
+DRIVE:
+  input_dir: DRIVE/test/images
+  gt_dir: DRIVE/test/1st_manual
+  input_ext: tif
+  gt_ext: gif
+  whole_size: [584, 565]
+  patch_size: [256, 256]
+  crop_output: [8, 0, 503, 512]
+
+STARE:
+  input_dir: STARE/images
+  gt_dir: STARE/labels-ah
+  input_ext: ppm
+  gt_ext: ppm
+  whole_size: [605, 700]
+  patch_size: [256, 256]
+  crop_output: [0, 35, 512, 477]
+
+CHASEDB1:
+  input_dir: CHASEDB1/CHASEDB1
+  gt_dir: CHASEDB1/CHASEDB1
+  input_ext: jpg
+  gt_ext: png
+  whole_size: [960, 999]
+  patch_size: [512, 512]
+  crop_output: [0, 10, 512, 502]
+
+HRF:
+  input_dir: HRF/images
+  gt_dir: HRF/manual1
+  input_ext: jpg
+  gt_ext: tif
+  whole_size: [2336, 3504]
+  patch_size: [512, 512]
+  crop_output: [0, 85, 512, 426]

@@ -1,0 +1,199 @@
+pipeline_cls: mlpipeline.train.semantic_segmentation.SemanticSegmentation
+parameter_setting: ${model.params.cfg.arch}_${model.params.cfg.loss_name}_${model.params.cfg.pos_weight}_lr:${optimizer.params.lr}_wd:${optimizer.params.weight_decay}
+n_gpus: 1
+eval_baseline_only: true
+data:
+  root_dir: /opt/data/retinal_images
+  dataset_cls: mlpipeline.data.dataset.FIVESDataset
+  pkl_filename: cv_split_5folds_fives_${seed}.pkl
+  test_metadata: test_dataset.yaml
+  image_dir:
+    fives: /opt/data/FIVES
+    base: /opt/data
+  rin_image_dir:
+  image_size: 512
+  data_dir: ${data.root_dir}/workdir/datasets
+  image_root:
+  num_classes: 1
+  num_channels: 3
+  dataset: fives
+  training_samples: -1
+  valid_samples: -1
+  num_workers: 8
+  batch_size: 2
+  use_skeleton: false
+  use_uncertainty: ''
+  two_branches: false
+  two_branches_num_patches: 16
+
+  augs:
+    train:
+      stream:
+        transforms:
+          - resizing:
+              resize_to: 2048
+              interpolation: lanczos
+          - flip:
+              axis: 0
+              p: 0.5
+          - flip:
+              axis: 1
+              p: 0.5
+          - rotate:
+              angle_range: [-180, 180]
+              interpolation: lanczos
+              padding: "r"
+              p: 0.5
+          - random_resized_crop:
+              scale: [0.2, 0.6]
+              ratio: [0.8, 1.2]
+              resize_to: 512
+              interpolation: lanczos
+              p: 1.0
+          - resizing:
+              resize_to: 512
+              interpolation: lanczos
+          - brightness:
+              brightness_range: [-20, 20]
+              p: 0.6
+          - contrast:
+              contrast_range: 0.1
+              p: 0.6
+          - hsv:
+              h_range: [-10, 10]
+              s_range: [-10, 10]
+              v_range: [-10, 10]
+              p: 0.6
+          - random_tone_curve:
+              scale: 0.1
+              p: 0.5
+          - blur:
+              k_size: [3, 5]
+              gaussian_sigma: [0.8, 1.2]
+              p: 0.25
+          - gamma_correction:
+              gamma_range: 0.2
+              p: 0.5
+          - noise:
+              gain_range: 0.04
+              p: 0.4
+          - cvt_color:
+              mode: rgb2gs
+              keep_dim: true
+              p: 0.15
+
+    train_patches:
+      stream:
+        transforms:
+          - resizing:
+              resize_to: 512
+              interpolation: lanczos
+          - scale:
+              range_x: [0.8, 1.2]
+              range_y: [0.8, 1.2]
+              same: false
+              interpolation: lanczos
+              padding: "r"
+              p: 0.6
+          - flip:
+              axis: 0
+              p: 0.5
+          - flip:
+              axis: 1
+              p: 0.5
+          - rotate:
+              angle_range: [-180, 180]
+              interpolation: lanczos
+              padding: "r"
+              p: 0.5
+          - brightness:
+              brightness_range: [-20, 20]
+              p: 0.6
+          - contrast:
+              contrast_range: 0.1
+              p: 0.6
+          - hsv:
+              h_range: [-10, 10]
+              s_range: [-10, 10]
+              v_range: [-10, 10]
+              p: 0.6
+          - random_tone_curve:
+              scale: 0.1
+              p: 0.5
+          - blur:
+              k_size: [3, 5]
+              gaussian_sigma: [0.8, 1.2]
+              p: 0.25
+          - gamma_correction:
+              gamma_range: 0.2
+              p: 0.5
+          - noise:
+              gain_range: 0.04
+              p: 0.4
+          - cvt_color:
+              mode: rgb2gs
+              keep_dim: true
+              p: 0.15
+
+    val:
+      stream:
+        transforms: []
+
+    test:
+      stream:
+        transforms: []
+
+  mean: [0.07, 0.15, 0.34]
+  std: [0.2, 0.3, 0.4]
+
+train:
+  num_epochs: 20
+  distributed: false
+  continue_train: false
+  inference_only: false
+  use_patches: true
+
+model:
+  name: SemanticSegmentation
+  cls: mlpipeline.models.semantic_segmentation.${model.name}
+  pretrained_encoder:
+  pretrained_model:
+  find_unused_parameters: false
+  params:
+    cfg:
+      arch: Unet
+      encoder_name: resnet50
+      encoder_weights: imagenet
+      num_classes: ${data.num_classes}
+      num_channels: ${data.num_channels}
+      image_size: ${data.image_size}
+      batch_size: ${data.batch_size}
+      two_branches_num_patches: ${data.two_branches_num_patches}
+      loss_name: dice
+      loss_mode: binary
+      pos_weight: 1.0
+      dropout: 0.2
+      pretrained: true
+      test_on_patches: true
+
+optimizer:
+  cls: torch.optim.Adam
+  params:
+    params: ~
+    lr: 1e-4
+    weight_decay: 1e-5
+  scheduler:
+    warmup_for: 0
+    type: milestones
+    gamma: 0.1
+    milestones: [10]
+
+metrics:
+  mode: binary
+  n_classes: 1
+  threshold: 0.5
+  key_metric: IoU
+
+checkpointer:
+  keep_old: false
+  comparator: gt
